@@ -43,6 +43,19 @@ PC와 휴대폰 브라우저에서 모두 플레이할 수 있고, 별도 설치
 
 ---
 
+## 코드 구성
+
+게임마다 화면 구조(HTML), 디자인(CSS), 동작(JavaScript)을 파일로 나눠 두었어요.
+
+| 게임 | HTML (화면 구조) | CSS (디자인) | JavaScript (게임 동작) |
+|---|---|---|---|
+| 🛒 장보기 타임어택 | [shopping/index.html](shopping/index.html) | [shopping/style.css](shopping/style.css) | [shopping/script.js](shopping/script.js) |
+| 👗 백스테이지 퀵체인지 | [backstage/index.html](backstage/index.html) | [backstage/style.css](backstage/style.css) | [backstage/script.js](backstage/script.js) |
+
+- **HTML**: 점수판, 타이머, 지도(캔버스), 목록·피팅 패널 같은 화면의 뼈대
+- **CSS**: 색, 글꼴, 배치, 다크 모드, 휴대폰 화면 대응
+- **JavaScript**: 매장/백스테이지 지도, 캐릭터 이동과 길찾기, 담기·입히기 판정, 타이머, 점수, 단계별 난이도
+
 ## 새 게임 추가하기
 
 새 게임은 새 폴더(예: `my-new-game/index.html`)로 추가하고, 맨 위 `index.html` 게임 목록에 카드를 하나 더 넣으면 됩니다. 기존 게임은 그대로 유지돼요.
