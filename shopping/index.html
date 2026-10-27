@@ -103,7 +103,7 @@ button:focus-visible, canvas:focus-visible { outline: 3px solid var(--tag); outl
 .goal.ready { background: var(--tag); color: var(--tag-ink); border-color: var(--tag); }
 .msg { min-height: 20px; font-size: 13px; color: var(--danger); font-weight: 600; }
 
-.overlay { position: absolute; inset: 0; background: color-mix(in srgb, var(--surface) 90%, transparent); display: grid; place-items: center; padding: 20px; z-index: 5; backdrop-filter: blur(2px); overflow: auto; }
+.overlay { position: absolute; inset: 0; background: color-mix(in srgb, var(--surface) 90%, transparent); display: grid; place-items: center; padding: 20px; overflow: auto; z-index: 5; backdrop-filter: blur(2px); overflow: auto; }
 .card { max-width: 420px; width: 100%; text-align: center; display: grid; gap: 12px; justify-items: center; }
 .card h1 { font-family: var(--font-display); font-weight: 400; font-size: 36px; margin: 0; line-height: 1.1; text-wrap: balance; }
 .card p { margin: 0; color: var(--muted); line-height: 1.6; }
@@ -112,6 +112,35 @@ button:focus-visible, canvas:focus-visible { outline: 3px solid var(--tag); outl
 .card .rows div { display: flex; justify-content: space-between; gap: 10px; font-variant-numeric: tabular-nums; }
 .primary { border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-family: var(--font-display); font-size: 22px; padding: 12px 28px; }
 .rules { text-align: left; font-size: 14px; line-height: 1.7; color: var(--ink); margin: 0; padding-left: 20px; }
+/* 테마 고르기 · 스토리 카드 */
+.themes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+@media (max-width: 620px) {
+  .themes { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .theme { grid-template-columns: auto 1fr; align-items: center; column-gap: 10px; padding: 8px 12px; }
+  .theme .te { grid-row: span 2; font-size: 24px; }
+  .theme span:not(.te) { display: none; }
+  .card .rules.pick-rules { display: none; }
+  .card h1 { font-size: 26px; }
+}
+.theme { display: grid; gap: 4px; justify-items: start; text-align: left; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.theme:hover, .theme:focus-visible { border-color: var(--accent); }
+.theme .te { font-size: 28px; line-height: 1; }
+.theme b { font-family: var(--font-display); font-weight: 400; font-size: 20px; }
+.theme span { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.theme small { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+.card.wide { max-width: 640px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; color: var(--accent); }
+.bubble { width: 100%; text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; }
+.bubble .who { font-weight: 700; font-size: 14px; }
+.bubble .line { line-height: 1.6; font-size: 15px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.chips span { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 10px; font-size: 13px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ghostbtn { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 12px 18px; font-size: 15px; }
+.days { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; font-family: var(--font-mono); font-size: 12px; }
+.days span { padding: 2px 6px; border-radius: 4px; color: var(--muted); }
+.days span.on { background: var(--accent); color: var(--accent-ink); }
+.days span.past { color: var(--ok); }
 .flash { animation: shake .35s; }
 @keyframes shake { 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -124,7 +153,7 @@ button:focus-visible, canvas:focus-visible { outline: 3px solid var(--tag); outl
     <div class="brand"><span class="cartmark" aria-hidden="true">🛒</span>장보기 타임어택</div>
     <a class="home" href="../" style="font-size:13px;color:var(--muted)">← 게임 목록</a>
     <div class="stats">
-      <div class="stat"><span>단계</span><b id="lvl">1</b></div>
+      <div class="stat"><span id="lvlLabel">단계</span><b id="lvl">1</b></div>
       <div class="stat"><span>점수</span><b id="score">0</b></div>
       <div class="stat"><span>최고 기록</span><b id="best">0</b></div>
       <button class="iconbtn" id="sound" aria-label="소리 켜기/끄기" title="소리">🔊</button>
@@ -148,7 +177,7 @@ button:focus-visible, canvas:focus-visible { outline: 3px solid var(--tag); outl
 
     <aside class="side">
       <div class="receipt" id="receipt">
-        <h2>꼭 사야 할 것</h2>
+        <h2 id="listTitle">꼭 사야 할 것</h2>
         <div class="sub" id="listsub">목록에 있는 상품 위를 지나가세요</div>
         <ul class="list" id="list"></ul>
         <div class="dash"></div>
@@ -169,6 +198,56 @@ const CATS = [
   { name: "빵·과자", color: "--c4", items: [["bread","🍞","식빵",3200],["croissant","🥐","크루아상",2500],["bagel","🥯","베이글",2200],["cookie","🍪","쿠키",2900],["choco","🍫","초콜릿",1800],["candy","🍬","사탕",1200],["donut","🍩","도넛",1900],["cupcake","🧁","컵케이크",3300],["popcorn","🍿","팝콘",2700],["pretzel","🥨","프레첼",2400]] },
   { name: "생활용품", color: "--c5", items: [["tissue","🧻","휴지",9900],["soap","🧼","비누",2500],["sponge","🧽","수세미",1500],["brush","🪥","칫솔",3200],["shampoo","🧴","샴푸",8900],["broom","🧹","빗자루",6500],["candle","🕯️","양초",4200],["battery","🔋","건전지",5900],["socks","🧦","양말",3000]] },
 ];
+/* ---------- 테마 · 스토리 ---------- */
+// items: [상품 id, 수량]. stages가 있으면 정해진 이야기 순서대로, 없으면 끝없이 이어지는 모드
+const THEMES = {
+  closing: {
+    emo: "🌙", name: "마감 직전", tag: "무한 모드", unit: "단계", listTitle: "꼭 사야 할 것",
+    desc: "마트 문 닫기 직전! 오늘 꼭 필요한 걸 빨리 사서 나가야 해요.",
+    lines: [
+      ["📢 마트 방송", "고객 여러분, 영업 종료 10분 전입니다. 계산을 서둘러 주세요."],
+      ["🧑‍💼 퇴근길의 나", "야근 끝나고 오니 벌써 마감이네… 내일 아침거리만 빨리 사자!"],
+      ["📱 엄마의 문자", "오는 길에 마트 들러줄래? 문 닫기 전에!"],
+      ["📢 마트 방송", "곧 셔터가 내려갑니다. 남은 고객님은 계산대로 와 주세요."],
+      ["🧑‍💼 퇴근길의 나", "냉장고가 텅 비었어. 오늘 못 사면 내일 아침은 굶어야 해!"],
+      ["📢 마트 방송", "마감 3분 전! 계산대 한 곳만 열려 있습니다."],
+      ["📱 룸메이트의 문자", "미안 나 지금 집 가는 중인데… 혹시 대신 좀 사다 줄 수 있어?"],
+    ],
+    clear: "무사히 계산 완료! 셔터가 내려가기 직전에 빠져나왔어요.",
+    fail: ["마트 문 닫았어요", "셔터가 내려갔어요… 오늘은 빈손으로 집에 가요."],
+  },
+  week: {
+    emo: "🏠", name: "자취생의 일주일", tag: "7일 스토리", unit: "일차", listTitle: "오늘의 장보기",
+    desc: "첫 자취를 시작한 나의 월요일부터 일요일까지. 매일 밤 마트 마감 전에 장을 봐요.",
+    days: ["월", "화", "수", "목", "금", "토", "일"],
+    stages: [
+      { title: "월요일 · 이사 첫날", who: "🧑 나", line: "드디어 나만의 방! 그런데… 휴지도 칫솔도 없잖아?", items: [["tissue", 1], ["soap", 1], ["brush", 1]] },
+      { title: "화요일 · 첫 집밥 도전", who: "🧑 나", line: "오늘은 직접 볶음밥을 만들어 볼 거야. 유튜브에서 본 대로만 하면 돼!", items: [["egg", 1], ["onion", 1], ["carrot", 1], ["garlic", 1]] },
+      { title: "수요일 · 시험 전날 밤", who: "🧑 나", line: "내일 시험인데 밤새 공부해야 해… 커피랑 야식이 필요해!", items: [["coffee", 2], ["choco", 1], ["popcorn", 1], ["juice", 1]] },
+      { title: "목요일 · 감기 기운", who: "🤧 나", line: "콜록… 몸이 으슬으슬해. 따뜻한 차랑 먹기 편한 걸 사 가자.", items: [["milk", 1], ["tea", 1], ["apple", 2], ["potato", 1], ["bread", 1]] },
+      { title: "금요일 · 친구들의 집들이", who: "📱 친구 단톡방", line: "우리 내일 너네 집 간다~ 콜라랑 치킨 준비해 놔! 🎉", items: [["cola", 2], ["chicken", 2], ["cheese", 1], ["cookie", 1], ["pretzel", 1], ["tissue", 1]] },
+      { title: "토요일 · 엄마가 오신대요", who: "📞 엄마", line: "반찬 해서 갈게~ 방은 깨끗하지? 과일이랑 고기도 좀 사 놔라.", items: [["broom", 1], ["sponge", 1], ["shampoo", 1], ["socks", 1], ["grape", 1], ["straw", 1], ["beef", 1]] },
+      { title: "일요일 · 나에게 주는 선물", who: "🧑 나", line: "일주일 버틴 나 자신 칭찬해! 오늘은 제대로 파티다.", items: [["beef", 2], ["shrimp", 1], ["icecream", 1], ["cupcake", 1], ["bubble", 1], ["candle", 1], ["banana", 1]] },
+    ],
+    clear: "오늘 장보기 성공! 집에 가는 길이 가벼워요.",
+    ending: ["자취 1주차 완주! 🏠", "휴지 하나 없던 방이 이제 진짜 우리 집이 됐어요. 다음 주도 잘 부탁해, 자취생!"],
+    fail: ["마트 문 닫았어요", "오늘 밤은 편의점 라면으로 버텨야겠어요…"],
+  },
+  chef: {
+    emo: "👨‍🍳", name: "요리 서바이벌", tag: "5라운드 토너먼트", unit: "라운드", listTitle: "미션 재료",
+    desc: "TV 요리 경연 참가자! 심사위원이 낸 주제에 맞는 재료를 제한 시간 안에 구해 와요. 다른 손님은 경쟁 참가자예요.",
+    stages: [
+      { title: "예선 · 추억의 카레", who: "🎤 심사위원", line: "첫 미션입니다. 어릴 적 먹던 추억의 카레! 기본 재료부터 챙겨 오세요.", items: [["carrot", 1], ["potato", 1], ["onion", 1]] },
+      { title: "본선 1라운드 · 브런치", who: "🎤 심사위원", line: "주말 아침을 행복하게 만드는 브런치 한 접시를 보여 주세요.", items: [["bread", 1], ["bacon", 1], ["egg", 2], ["coffee", 1]] },
+      { title: "본선 2라운드 · 바다의 맛", who: "🎤 심사위원", line: "이번 주제는 해물 요리입니다. 바다 향이 가득해야 해요!", items: [["shrimp", 1], ["squid", 1], ["crab", 1], ["garlic", 1], ["butter", 1]] },
+      { title: "준결승 · 디저트", who: "🎤 심사위원", line: "달콤함으로 심사위원을 감동시켜 주세요. 단, 재료는 정확하게!", items: [["straw", 1], ["choco", 1], ["milk", 2], ["egg", 1], ["banana", 1], ["cookie", 1]] },
+      { title: "결승 · 인생 요리 풀코스", who: "🎤 심사위원", line: "마지막 미션! 당신의 인생을 담은 풀코스를 완성하세요. 우승이 눈앞입니다.", items: [["beef", 2], ["octopus", 1], ["potato", 1], ["garlic", 1], ["onion", 1], ["cheese", 1], ["grape", 1], ["icecream", 1]] },
+    ],
+    clear: "심사위원: \"재료 선택 완벽합니다. 다음 라운드 진출!\"",
+    ending: ["🏆 요리 서바이벌 우승!", "예선의 카레부터 결승 풀코스까지, 단 한 번도 시간을 넘기지 않았어요. 오늘의 우승자는 바로 당신!"],
+    fail: ["아쉽지만 탈락입니다", "심사위원: \"재료를 다 구하지 못했네요. 다음 시즌에 다시 만나요.\""],
+  },
+};
 const PRODUCTS = {};
 CATS.forEach((c, ci) => c.items.forEach(([id, emo, name, price]) => PRODUCTS[id] = { id, emo, name, price, cat: ci }));
 
@@ -209,7 +288,12 @@ const shuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0
 const key = (x, y) => x + "," + y;
 
 let best = 0, muted = false;
-try { best = Number(localStorage.getItem("shop-best")) || 0; muted = localStorage.getItem("shop-muted") === "1"; } catch (e) {}
+try { muted = localStorage.getItem("shop-muted") === "1"; } catch (e) {}
+const bestKey = id => id === "closing" ? "shop-best" : "shop-best-" + id;
+function loadBest() { try { best = Number(localStorage.getItem(bestKey(S.themeId))) || 0; } catch (e) { best = 0; } }
+function saveBest() { if (S.score > best) { best = S.score; try { localStorage.setItem(bestKey(S.themeId), best); } catch (e) {} } }
+const theme = () => THEMES[S.themeId];
+const stage = () => theme().stages ? theme().stages[S.level - 1] : null;
 
 let actx = null;
 function beep(freq, dur = 0.08, type = "sine", vol = 0.08) {
@@ -225,7 +309,7 @@ function beep(freq, dur = 0.08, type = "sine", vol = 0.08) {
 
 /* ---------- 게임 상태 ---------- */
 const S = {
-  level: 1, score: 0, list: [], cart: new Map(), itemAt: new Map(),
+  themeId: "closing", level: 1, score: 0, list: [], cart: new Map(), itemAt: new Map(),
   timeLeft: 0, timeTotal: 1, running: false, wrong: 0, last: 0,
   p: { x: START.x, y: START.y, dir: { x: 1, y: 0 }, stun: 0, inv: 0, path: [], tile: "" },
   npcs: [], flashes: new Map(), target: null, t: 0,
@@ -244,6 +328,8 @@ function layoutStore() {
 }
 
 function makeList(level) {
+  const st = THEMES[S.themeId].stages;
+  if (st) return st[level - 1].items.map(([id, qty]) => ({ id, qty }));
   const kinds = Math.min(2 + level, 9);
   const ids = shuffle([...S.itemAt.values()]).slice(0, kinds);
   return ids.map(id => {
@@ -261,8 +347,6 @@ function spawnNpcs(n) {
 }
 
 function startLevel() {
-  layoutStore();
-  S.list = makeList(S.level);
   S.cart = new Map(); S.wrong = 0; S.flashes = new Map(); S.target = null;
   const units = S.list.reduce((s, x) => s + x.qty, 0);
   const time = Math.round(Math.max(10 + units * 3.5, 14 + units * 5 - S.level * 1.2));
@@ -409,42 +493,88 @@ function clearLevel() {
   const base = 100 * S.level, timeBonus = Math.round(S.timeLeft * 10), perfect = S.wrong === 0 ? 50 : 0;
   const gained = base + timeBonus + perfect;
   S.score += gained;
-  if (S.score > best) { best = S.score; try { localStorage.setItem("shop-best", best); } catch (e) {} }
+  saveBest();
   renderHud();
   [660, 880, 1100].forEach((f, i) => setTimeout(() => beep(f, 0.1), i * 90));
-  showOverlay(`
-    <h1>${S.level}단계 계산 완료</h1>
-    <div class="big">+${gained}</div>
+  const th = theme(), st = stage(), last = th.stages && S.level >= th.stages.length;
+  const rows = `
     <div class="rows">
-      <div><span>단계 보너스</span><span>${base}</span></div>
+      <div><span>${th.unit} 보너스</span><span>${base}</span></div>
       <div><span>남은 시간 ${S.timeLeft.toFixed(1)}초 × 10</span><span>${timeBonus}</span></div>
       <div><span>엉뚱한 상품 안 밟기</span><span>${perfect ? 50 : "0 (" + S.wrong + "번)"}</span></div>
-    </div>
-    <p>다음 단계는 진열이 바뀌고, 목록이 길어지고, 손님이 늘어나요.</p>
-    <button class="primary" id="go">${S.level + 1}단계 시작</button>`, () => { S.level++; startLevel(); });
+    </div>`;
+  if (last) {
+    setTimeout(() => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, 0.12), i * 110)), 400);
+    return showOverlay(`
+      <div class="eyebrow">THE END</div>
+      <h1>${th.ending[0]}</h1>
+      <p>${th.ending[1]}</p>
+      <div class="big">${S.score}점</div>
+      ${rows}
+      <p>${S.score >= best ? "이 테마 최고 기록이에요!" : "이 테마 최고 기록 " + best + "점"}</p>
+      <div class="btns"><button class="primary" id="again">처음부터 다시</button><button class="ghostbtn" id="pick">다른 테마 고르기</button></div>`,
+      { again: restartTheme, pick: chooseTheme });
+  }
+  showOverlay(`
+    <div class="eyebrow">${st ? st.title : S.level + th.unit} 클리어</div>
+    <h1>${th.clear}</h1>
+    <div class="big">+${gained}</div>
+    ${rows}
+    <button class="primary" id="go">다음 ${th.unit}로</button>`, { go: () => { S.level++; showStory(); } });
 }
 
 function gameOver() {
   S.running = false; renderHud();
   const got = S.list.filter(({ id, qty }) => (S.cart.get(id) || 0) >= qty).length;
   beep(300, 0.15, "square", 0.05); setTimeout(() => beep(200, 0.3, "square", 0.05), 150);
-  const isBest = S.score > 0 && S.score >= best;
+  saveBest();
+  const th = theme(), st = stage(), isBest = S.score > 0 && S.score >= best;
   showOverlay(`
-    <h1>마트 문 닫았어요</h1>
-    <p>${S.level}단계에서 시간이 다 됐어요. 목록 ${S.list.length}개 중 ${got}개를 챙겼어요.</p>
+    <div class="eyebrow">${st ? st.title : S.level + th.unit}</div>
+    <h1>${th.fail[0]}</h1>
+    <p>${th.fail[1]}</p>
+    <p>목록 ${S.list.length}개 중 ${got}개를 챙겼어요.</p>
     <div class="big">${S.score}점</div>
-    <p>${isBest ? "새 최고 기록이에요!" : "최고 기록 " + best + "점"}</p>
-    <button class="primary" id="go">처음부터 다시</button>`, () => { S.level = 1; S.score = 0; startLevel(); });
+    <p>${isBest ? "이 테마 새 최고 기록이에요!" : "이 테마 최고 기록 " + best + "점"}</p>
+    <div class="btns"><button class="primary" id="again">처음부터 다시</button><button class="ghostbtn" id="pick">다른 테마 고르기</button></div>`,
+    { again: restartTheme, pick: chooseTheme });
 }
 
-function showOverlay(html, onGo) {
-  const o = $("overlay"); o.innerHTML = `<div class="card">${html}</div>`; o.hidden = false;
-  const go = $("go"); go.onclick = onGo; go.focus({ preventScroll: true });
+// 버튼 id → 누르면 할 일
+function showOverlay(html, actions, wide) {
+  const o = $("overlay"); o.innerHTML = `<div class="card${wide ? " wide" : ""}">${html}</div>`; o.hidden = false; o.scrollTop = 0;
+  let first = null;
+  for (const [id, fn] of Object.entries(actions)) { const b = $(id); if (b) { b.onclick = fn; first = first || b; } }
+  const focusEl = $("go") || first; if (focusEl) focusEl.focus({ preventScroll: true });
+}
+
+function restartTheme() { S.level = 1; S.score = 0; showStory(); }
+
+/* ---------- 스토리 카드 ---------- */
+function showStory() {
+  const th = theme(), st = stage();
+  S.running = false;
+  layoutStore();
+  S.list = makeList(S.level);
+  S.cart = new Map();
+  renderHud();
+  const [who, line] = st ? [st.who, st.line] : th.lines[(S.level - 1) % th.lines.length];
+  const title = st ? st.title : `${S.level}${th.unit}`;
+  const days = th.days ? `<div class="days">${th.days.map((d, i) => `<span class="${i + 1 === S.level ? "on" : i + 1 < S.level ? "past" : ""}">${i + 1 < S.level ? "✓" : ""}${d}</span>`).join("")}</div>` : "";
+  const progress = th.stages ? ` · ${S.level}/${th.stages.length}` : "";
+  showOverlay(`
+    <div class="eyebrow">${th.emo} ${th.name}${progress}</div>
+    ${days}
+    <h1>${title}</h1>
+    <div class="bubble"><span class="who">${who}</span><span class="line">${line}</span></div>
+    <div class="chips">${S.list.map(({ id, qty }) => `<span>${PRODUCTS[id].emo} ${PRODUCTS[id].name}${qty > 1 ? " ×" + qty : ""}</span>`).join("")}</div>
+    <button class="primary" id="go">장보기 시작</button>`, { go: startLevel });
 }
 
 /* ---------- HUD ---------- */
 function renderHud() {
   $("lvl").textContent = S.level; $("score").textContent = S.score; $("best").textContent = best;
+  $("lvlLabel").textContent = theme().unit; $("listTitle").textContent = theme().listTitle;
   $("sound").textContent = muted ? "🔇" : "🔊";
   const el = $("list"); el.innerHTML = "";
   let total = 0;
@@ -623,28 +753,35 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", rea
 new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
 /* ---------- 시작 화면 ---------- */
-function intro() {
+function chooseTheme() {
+  S.running = false;
+  showOverlay(`
+    <h1>어떤 장보기를 할까요?</h1>
+    <div class="themes">
+      ${Object.entries(THEMES).map(([id, t]) => `<button class="theme" id="th-${id}"><span class="te" aria-hidden="true">${t.emo}</span><b>${t.name}</b><small>${t.tag}</small><span>${t.desc}</span></button>`).join("")}
+    </div>
+    <ol class="rules pick-rules">
+      <li>방향키·WASD로 움직이거나, 가고 싶은 곳을 클릭·탭하세요.</li>
+      <li>목록에 있는 상품 위를 지나가면 담겨요. 2개가 필요하면 한 번 벗어났다가 다시 밟아요.</li>
+      <li>목록에 없는 상품을 밟으면 3초 감점, 손님과 부딪히면 잠깐 멈춰요.</li>
+      <li>다 담았으면 오른쪽 아래 <b>계산대</b>로!</li>
+    </ol>`,
+    Object.fromEntries(Object.keys(THEMES).map(id => ["th-" + id, () => { S.themeId = id; loadBest(); restartTheme(); }])), true);
+}
+function boot() {
   readTheme(); resize();
+  loadBest();
   layoutStore();
-  S.list = makeList(1);
+  S.list = [];
   S.timeLeft = S.timeTotal = 30;
   spawnNpcs(2);
   renderHud();
-  showOverlay(`
-    <h1>마트 마감까지 얼마 안 남았어요</h1>
-    <ol class="rules">
-      <li>방향키·WASD로 움직이거나, 가고 싶은 곳을 클릭·탭하세요.</li>
-      <li>목록에 있는 상품 위를 지나가면 장바구니에 담겨요. 2개가 필요하면 한 번 벗어났다가 다시 밟아요.</li>
-      <li>목록에 없는 상품을 밟으면 3초가 깎여요.</li>
-      <li>돌아다니는 손님과 부딪히면 잠깐 멈춰요.</li>
-      <li>다 담았으면 오른쪽 아래 <b>계산대</b>로 가면 끝!</li>
-    </ol>
-    <button class="primary" id="go">장보기 시작</button>`, startLevel);
+  chooseTheme();
   S.last = performance.now();
   requestAnimationFrame(frame);
 }
 document.fonts && document.fonts.ready.then(() => readTheme());
-intro();
+boot();
 </script>
 </body>
 </html>
