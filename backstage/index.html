@@ -199,7 +199,7 @@ button:focus-visible, canvas:focus-visible { outline: 3px solid var(--gold); out
         <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 또는 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동</span>
         <span>지도를 클릭·탭하면 그곳까지 걸어가요</span>
         <span>옷 위를 지나가면 손에 들어요 (최대 5벌)</span>
-        <span>모델 옆에서 <kbd>Space</kbd> 전부 입히기 → 한 번 더 누르면 런웨이로</span>
+        <span>모델에게 다가가면 저절로 입혀져요 → <kbd>Space</kbd>·<kbd>Enter</kbd>로 런웨이에</span>
       </div>
     </div>
 
@@ -579,7 +579,13 @@ function updatePlayer(dt) {
   let near = null, nd = 1.9 * T;
   for (const m of S.models) if (m.state === "fit") { const d = Math.hypot(m.x - p.x, m.y - p.y); if (d < nd) { nd = d; near = m; } }
   const id = near ? near.id : null;
-  if (id !== S.fitId) { S.fitId = id; renderSide(); if (near) beep(980, 0.04, "sine", 0.04); }
+  if (id !== S.fitId) {
+    S.fitId = id;
+    // 모델에게 다가가면 손에 든 옷을 저절로 입힘 (다가갈 때 한 번만)
+    if (near && S.hands.length) { wearAll(); say(`${near.name}에게 옷을 입혔어요. Space나 Enter로 런웨이에 내보내요`, true); }
+    else if (near) beep(980, 0.04, "sine", 0.04);
+    renderSide();
+  }
 }
 function onEnter(k) {
   const it = S.slots.get(k); if (!it) return;
@@ -618,10 +624,10 @@ function renderFitting() {
         ${slots}
       </div>
       <div style="display:grid; gap:8px; min-width:0">${card}
-        <div class="acts"><button class="wearall" id="wearall" ${S.hands.length ? "" : "disabled"}>한 번에 입히기 <kbd>Space</kbd></button>
+        <div class="acts"><button class="wearall" id="wearall" ${S.hands.length ? "" : "disabled"}>든 옷 입히기 <kbd>Space</kbd></button>
         <button class="send" id="send">런웨이로 ▶ <kbd>Enter</kbd></button></div></div>
     </div>
-    <div class="hint"><b>Space</b>를 누르면 손에 든 옷을 전부 입히고, 한 번 더 누르면 런웨이로 내보내요. 옷을 하나씩 끌어다 놓거나 눌러서 입혀도 돼요. 입힌 옷을 누르면 벗겨요.</div>
+    <div class="hint">다가오면 손에 든 옷이 저절로 입혀져요. <b>Space</b>나 <b>Enter</b>로 런웨이에 내보내요. 입힌 옷을 누르면 벗겨요.</div>
     <div class="hands" id="fitHands"></div>`;
   el.querySelectorAll("[data-off]").forEach(b => b.onclick = () => takeOff(b.dataset.off));
   $("send").onclick = () => finishModel(m, false);
@@ -869,7 +875,7 @@ function intro() {
     <ol class="rules">
       <li>런웨이에서 돌아온 모델이 피팅 자리에 서면 <b>룩 카드</b>가 보여요.</li>
       <li>행거·신발장·액세서리 테이블을 돌며 카드에 맞는 옷 위를 지나가 손에 들어요. 한 번에 5벌까지 들 수 있어요.</li>
-      <li>모델 옆에 서서 <b>Space</b>를 누르면 손에 든 옷을 한 번에 입혀요. 한 번 더 누르면 런웨이로 내보내요. 휴대폰에서는 <b>한 번에 입히기</b> 버튼을 누르세요.</li>
+      <li>옷을 들고 모델에게 다가가면 <b>저절로 입혀져요</b>. 룩 카드와 맞는지 확인하고 <b>Space</b>나 <b>Enter</b>(휴대폰은 <b>런웨이로</b> 버튼)로 내보내요.</li>
       <li>색·무늬만 다른 비슷한 옷을 조심하세요. 틀리거나 시간이 지나면 목숨이 하나 줄어요.</li>
     </ol>
     <button class="primary" id="go">쇼 시작</button>`, startShow);
